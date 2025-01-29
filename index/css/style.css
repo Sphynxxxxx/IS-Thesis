@@ -1,0 +1,224 @@
+* {
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+}
+
+body {
+   font-family: Arial, sans-serif;
+   background-color: #f4f7f6;
+   color: #333;
+   padding: 20px;
+}
+
+/* Container */
+.container {
+   max-width: 800px;
+   margin: 0 auto;
+   padding: 20px;
+}
+
+/* Profile Container */
+.profile-container {
+   background-color: #fff;
+   border-radius: 8px;
+   padding: 30px;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+   text-align: center;
+}
+
+/* Heading */
+.profile-container h3 {
+   font-size: 24px;
+   margin-bottom: 20px;
+   color: #2F5233;
+   font-weight: 600;
+}
+
+/* Profile Picture */
+.profile-picture img {
+   border-radius: 50%;
+   margin-bottom: 20px;
+   border: 3px solid #2F5233;
+}
+
+/* Form Inputs */
+input[type="text"], input[type="email"], input[type="file"] {
+   width: 100%;
+   padding: 12px;
+   margin: 10px 0;
+   border: 1px solid #ccc;
+   border-radius: 5px;
+   font-size: 14px;
+   color: #333;
+   background-color: #f9f9f9;
+   transition: border-color 0.3s ease;
+}
+
+input[type="file"] {
+   border: none;
+   padding: 10px;
+   background-color: #f0f4f1;
+}
+
+input[type="text"]:disabled, input[type="email"]:disabled {
+   background-color: #eaeaea;
+   cursor: not-allowed;
+}
+
+/* Buttons */
+.btn {
+   background-color: #2F5233;
+   color: #fff;
+   border: none;
+   padding: 12px 20px;
+   border-radius: 5px;
+   font-size: 16px;
+   cursor: pointer;
+   transition: background-color 0.3s ease;
+   margin-bottom: 20px;
+}
+
+.btn:hover {
+   background-color: #3b6c4a;
+}
+
+.btn:disabled {
+   background-color: #aab0a2;
+   cursor: not-allowed;
+}
+
+/* Form Labels */
+label {
+   font-size: 14px;
+   color: #555;
+   margin-top: 10px;
+   text-align: left;
+   display: block;
+}
+
+/* Message */
+.message {
+   display: block;
+   margin-bottom: 20px;
+   color: #e74c3c;
+   font-weight: bold;
+}
+
+.profile-container form {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+}
+
+.profile-container form input,
+.profile-container form label {
+   width: 100%;
+}
+
+input[type="text"], input[type="email"], input[type="file"] {
+   margin-bottom: 15px;
+   border: 1px solid #ddd;
+}
+
+input[type="file"]:hover, input[type="text"]:focus, input[type="email"]:focus {
+   border-color: #2F5233;
+   outline: none;
+}
+
+.profile-picture {
+   margin-bottom: 20px;
+}
+
+/* Clean up form inputs */
+input[type="text"], input[type="email"], input[type="file"] {
+   border: 1px solid #ddd;
+   border-radius: 4px;
+}
+
+
+
+/* Select Styles */
+select {
+   width: 100%;
+   padding: 12px;
+   margin: 10px 0;
+   border: 1px solid #ddd;
+   border-radius: 5px;
+   font-size: 14px;
+   color: #333;
+   background-color: #f9f9f9;
+   transition: border-color 0.3s ease;
+   cursor: pointer;
+   margin-bottom: 15px;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+   background-repeat: no-repeat;
+   background-position: calc(100% - 12px) center;
+   padding-right: 35px;
+}
+
+select:hover:not(:disabled) {
+   border-color: #2F5233;
+}
+
+select:focus {
+   border-color: #2F5233;
+   outline: none;
+}
+
+select:disabled {
+   background-color: #eaeaea;
+   cursor: not-allowed;
+   opacity: 0.7;
+}
+
+select option {
+   padding: 12px;
+   background-color: #fff;
+}
+
+select option:hover {
+   background-color: #f0f4f1;
+}
+
+select option[disabled] {
+   color: #999;
+}
+
+/* Required field indicator */
+.required {
+   color: #e74c3c;
+   margin-left: 3px;
+}
+
+form::before {
+   content: "* Required fields";
+   display: block;
+   color: #e74c3c;
+   font-size: 12px;
+   margin-bottom: 15px;
+   text-align: left;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+   .container {
+       padding: 10px;
+   }
+
+   .profile-container {
+       padding: 20px;
+   }
+
+   .btn {
+       font-size: 14px;
+       padding: 10px 15px;
+   }
+
+   h3 {
+       font-size: 20px;
+   }
+}

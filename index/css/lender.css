@@ -1,0 +1,294 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    padding: auto;
+    
+}
+
+.container {
+    width: 50%; 
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: auto;
+    padding: 30px;
+    
+}
+
+
+
+
+h3.title {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #2F5233;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.box {
+    width: auto;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f7f7f7;
+    color: #333;
+    font-size: 16px;
+}
+
+.box:focus {
+    outline: none;
+    border-color: #2F5233;
+    background-color: #ffffff;
+}
+
+textarea.box {
+    height: 120px;
+    resize: vertical;
+}
+
+select.box {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f7f7f7;
+    font-size: 16px;
+}
+
+select.box:focus {
+    outline: none;
+    border-color: #2F5233;
+    background-color: #ffffff;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #2F5233;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #3e6748;
+}
+
+a.btn {
+    width: auto;
+    display: inline-block;
+    margin-top: 15px;
+    background-color: #ccc;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+}
+
+a.btn:hover {
+    background-color: #bbb;
+}
+
+select#register-address,
+select#Categories {
+    background-color: #f7f7f7;
+}
+
+select#register-address option,
+select#Categories option {
+    background-color: #fff;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form .box {
+    background-color: #f7f7f7;
+}
+
+form .box:focus {
+    background-color: white;
+}
+
+form .title {
+    font-weight: bold;
+}
+
+.input{
+    width: 10px;
+}
+form .input-group input,
+form .input-group select,
+form .input-group textarea {
+    font-size: 16px;
+    
+}
+
+form .input-group {
+    margin-bottom: 20px;
+}
+
+select#register-address,
+select#categories {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f7f7f7;
+    font-size: 16px;
+    color: #333;
+}
+
+select#register-address:focus,
+select#categories:focus {
+    outline: none;
+    border-color: #2F5233;
+    background-color: #ffffff;
+}
+
+select#register-address option,
+select#categories option {
+    background-color: #ffffff;
+    padding: 12px;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 100px;
+    background-color: #2F5233;
+    color: white;
+    height: 100vh;
+    padding: 20px;
+    position: fixed;
+    top: 0;
+    left: -250px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-right: 1px solid #ddd;
+    transition: transform 0.3s ease;
+}
+.sidebar .title {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a,
+.sidebar ul li button {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 10px;
+    display: block;
+    width: auto;
+    background-color: #2F5233;
+    border: none;
+    text-align: left;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li button:hover {
+    background-color: #3a6f4c;
+}
+
+/* Hamburger Icon */
+.sidebar-toggle {
+    display: block;
+    background: none;
+    border: none;
+    color:  #2F5233;
+    font-size: 30px;
+    margin: 20px;
+    cursor: pointer;
+    font-size: 40px;
+}
+
+.sidebar.active {
+    left: 0; 
+}
+
+.back-button-container {
+    margin: 10px 0;
+}
+
+.back-button {
+    text-decoration: none;
+    color: #2F5233;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.back-button i {
+    font-size: 30px;
+}
+
+.back-button:hover {
+    color: #0056b3;
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-250px);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .container {
+        margin-left: 0;
+    }
+
+    .sidebar-toggle {
+        display: block; 
+    }
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-250px);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .container {
+        margin-left: 0;
+    }
+
+    .sidebar-toggle {
+        display: block;
+    }
+}
+
+

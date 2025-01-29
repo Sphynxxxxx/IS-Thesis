@@ -1,0 +1,16 @@
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+COMPOSER
+install COMPOSER "getcomposer.org."
+
+Locate the path directory 
+verify the installation "composer --version"
+Install PHPMailer via Composer (install in terminal)
+
+composer require phpmailer/phpmailer
+composer require tecnickcom/tcpdf
+composer install
+composer self-update
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,163 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.back-button-container {
+    margin: 10px 0;
+}
+
+.back-button {
+    text-decoration: none;
+    color: black;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.back-button i {
+    font-size: 30px;
+}
+
+.back-button:hover {
+    color: #0056b3;
+}
+
+.table {
+    margin-bottom: 30px;
+}
+
+.table h2 {
+    background-color: #2F5233;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 18px;
+}
+
+.table ul {
+    list-style: none;
+    padding: 0;
+}
+
+.table ul li {
+    background-color: #f9f9f9;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table ul li:hover {
+    background-color: #f1f1f1;
+}
+
+.table ul li img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 20px;
+}
+
+.table ul li a {
+    color: #2F5233;
+    text-decoration: none;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.table ul li a:hover {
+    text-decoration: underline;
+}
+
+
+.sidebar {
+    background-color: #2F5233;
+    color: white;
+    height: 100vh;
+    width: 100px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 20px;
+    box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar a {
+    color: white;
+    text-decoration: none;
+    font-size: 15px;
+    display: block;
+    padding: 15px 0;
+    margin-bottom: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar a:hover {
+    background-color: #3b6c4a;
+}
+
+.sidebar a:active {
+    background-color: #2A3D29;
+}
+
+.sidebar .logo {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+.sidebar .logo a {
+    color: white;
+    text-decoration: none;
+}
+
+.sidebar .logo a:hover {
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+    }
+
+    .table ul li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .table ul li img {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .sidebar {
+        width: 200px;
+    }
+
+    .sidebar a {
+        font-size: 14px;
+        padding: 10px 0;
+    }
+}
