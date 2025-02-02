@@ -9,7 +9,7 @@ if (isset($_GET['order_reference'])) {
 
     // Fetch the order details from the database
     $order_query = "SELECT o.id AS order_id, o.reference_number, o.order_date, o.delivery_method, 
-                    c.name, c.email, c.contact_number, c.address
+                    c.firstname, c.lastname, c.email, c.contact_number, c.address
                     FROM orders o
                     JOIN customer c ON o.customer_id = c.customer_id
                     WHERE o.reference_number = ?";
@@ -50,7 +50,7 @@ if (isset($_GET['order_reference'])) {
         $pdf->SetFont('helvetica', '', 12);
         $pdf->Ln(10);  // Line break
         $pdf->Cell(0, 10, 'Order Reference: ' . $order['reference_number'], 0, 1);
-        $pdf->Cell(0, 10, 'Name: ' . $order['name'], 0, 1);
+        $pdf->Cell(0, 10, 'Name: ' . $order['firstname'] . ' ' . $order['lastname'], 0, 1);
         $pdf->Cell(0, 10, 'Email: ' . $order['email'], 0, 1);
         $pdf->Cell(0, 10, 'Contact Number: ' . $order['contact_number'], 0, 1);
         $pdf->Cell(0, 10, 'Address: ' . $order['address'], 0, 1);

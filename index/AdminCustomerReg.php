@@ -241,7 +241,7 @@ $declined_result = $conn->query("SELECT * FROM customer WHERE status = 'declined
                     <?php while ($row = $approved_result->fetch_assoc()): ?>
                         <li>
                             <div class="info">
-                                <strong><?php echo htmlspecialchars($row['name']); ?></strong><br>
+                                <strong><?php echo htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']); ?></strong><br>
                                 <span>Contact: <?php echo htmlspecialchars($row['contact_number']); ?></span><br>
                                 <span>Address: <?php echo htmlspecialchars($row['address']); ?></span><br>
                                 <span>Email: <?php echo htmlspecialchars($row['email']); ?></span>
