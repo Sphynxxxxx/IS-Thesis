@@ -28,7 +28,7 @@ $customerId = $customer['customer_id'];
 
 // Query to get orders for this customer
 $sqlOrders = "
-    SELECT o.id AS order_id, o.order_date, o.delivery_method, o.reference_number, o.total_price
+    SELECT o.id AS order_id, o.order_date, o.delivery_method, o.penalty_amount, o.reference_number, o.total_price
     FROM orders o
     WHERE o.customer_id = ?
     ORDER BY o.order_date DESC
@@ -183,15 +183,29 @@ while ($order = $resultOrders->fetch_assoc()) {
     echo "<h2>Order #" . htmlspecialchars($order['reference_number']) . "</h2>";
     echo "<p>Order Date: " . htmlspecialchars($order['order_date']) . "</p>";
     echo "<p>Delivery Method: " . htmlspecialchars($order['delivery_method']) . "</p>";
+    echo "<p>Penalty amount: " . htmlspecialchars($order['penalty_amount']) . "</p>";
     echo "<p>Total Price: ₱" . htmlspecialchars($order['total_price']) . "</p>";
 
     // Query to get order details
     $sqlOrderDetails = "
-        SELECT od.product_id, od.quantity, od.price, p.product_name, p.image 
-        FROM order_details od
-        JOIN products p ON od.product_id = p.id
-        WHERE od.order_id = ?
-    ";
+    SELECT 
+        od.product_id, 
+        od.quantity, 
+        od.price, 
+        p.product_name, 
+        p.image,
+        p.rent_days,
+        o.penalty_amount,
+        o.total_price,
+        od.start_date,
+        od.end_date,
+        o.penalty_amount as order_penalty,
+        (od.quantity * od.price) as subtotal
+    FROM order_details od
+    JOIN products p ON od.product_id = p.id
+    JOIN orders o ON od.order_id = o.id
+    WHERE od.order_id = ?
+";
 
     $stmtDetails = $conn->prepare($sqlOrderDetails);
     $stmtDetails->bind_param("i", $order['order_id']);
@@ -207,7 +221,10 @@ while ($order = $resultOrders->fetch_assoc()) {
             <th>Image</th>
             <th>Quantity</th>
             <th>Price</th>
-            <th>Delivery Method</th> <!-- Changed to Delivery Method -->
+            <th>Start Rental Date</th>
+            <th>End Rental Date</th>
+            <th>Penalty Amount</th>
+            <th>Total Amount</th>
         </tr>";
     while ($detail = $resultDetails->fetch_assoc()) {
         echo "<tr>
@@ -216,7 +233,10 @@ while ($order = $resultOrders->fetch_assoc()) {
             <td><img class='product-image' src='uploaded_img/" . htmlspecialchars($detail['image']) . "' alt='Product Name: " . htmlspecialchars($detail['product_name']) . "'></td>
             <td>" . htmlspecialchars($detail['quantity']) . "</td>
             <td>₱" . htmlspecialchars($detail['price']) . "</td>
-            <td>" . htmlspecialchars($order['delivery_method']) . "</td> <!-- Show delivery method -->
+            <td>" . htmlspecialchars($detail['start_date']) . "</td>
+            <td>" . htmlspecialchars($detail['end_date']) . "</td>
+            <td>₱" . htmlspecialchars($detail['penalty_amount']) . "</td>
+            <td>₱" . htmlspecialchars($detail['total_price']) . "</td>
         </tr>";
     }
     echo "</table>";

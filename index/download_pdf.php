@@ -3,12 +3,29 @@ session_start();
 include 'config.php';
 require_once('vendor/tecnickcom/tcpdf/tcpdf.php');  
 
-// Ensure that the order reference is passed and valid
+// Function to calculate rental duration
+function calculateRentalDuration($startDate, $endDate) {
+    $start = new DateTime($startDate);
+    $end = new DateTime($endDate);
+    $interval = $start->diff($end);
+    return $interval->days;
+}
+
+// Function to calculate penalty
+function calculatePenalty($amount, $rentalDuration, $maxRentDays, $penaltyRate = 0.05) {
+    if ($rentalDuration > $maxRentDays) {
+        $overdueDays = $rentalDuration - $maxRentDays;
+        return $amount * $penaltyRate * $overdueDays;
+    }
+    return 0;
+}
+
 if (isset($_GET['order_reference'])) {
     $order_reference = $_GET['order_reference'];
 
-    // Fetch the order details from the database
-    $order_query = "SELECT o.id AS order_id, o.reference_number, o.order_date, o.delivery_method, 
+    // Updated order query to include penalty amount and total price
+    $order_query = "SELECT o.id AS order_id, o.reference_number, o.order_date, 
+                    o.delivery_method, o.total_price, o.penalty_amount,
                     c.firstname, c.lastname, c.email, c.contact_number, c.address
                     FROM orders o
                     JOIN customer c ON o.customer_id = c.customer_id
@@ -20,7 +37,7 @@ if (isset($_GET['order_reference'])) {
     $order = $order_result->fetch_assoc();
 
     if ($order) {
-        // Fetch order details
+        // Updated query to include rent_days and penalty_amount
         $order_details_query = "
             SELECT 
                 od.id AS detail_id,
@@ -28,6 +45,8 @@ if (isset($_GET['order_reference'])) {
                 od.price, 
                 p.product_name, 
                 p.image AS product_image,
+                p.rent_days,
+                p.penalty_amount,
                 od.start_date, 
                 od.end_date
             FROM order_details od
@@ -48,42 +67,89 @@ if (isset($_GET['order_reference'])) {
         
         // Customer information
         $pdf->SetFont('helvetica', '', 12);
-        $pdf->Ln(10);  // Line break
+        $pdf->Ln(10);
         $pdf->Cell(0, 10, 'Order Reference: ' . $order['reference_number'], 0, 1);
         $pdf->Cell(0, 10, 'Name: ' . $order['firstname'] . ' ' . $order['lastname'], 0, 1);
         $pdf->Cell(0, 10, 'Email: ' . $order['email'], 0, 1);
         $pdf->Cell(0, 10, 'Contact Number: ' . $order['contact_number'], 0, 1);
         $pdf->Cell(0, 10, 'Address: ' . $order['address'], 0, 1);
-        $pdf->Cell(0, 10, 'Order Date: ' . $order['order_date'], 0, 1);
-        $pdf->Cell(0, 10, 'Delivery Method: ' . $order['delivery_method'], 0, 1);
+        $pdf->Cell(0, 10, 'Order Date: ' . date('F j, Y, g:i a', strtotime($order['order_date'])), 0, 1);
         
-        // Order details table
+        // Order details table header
         $pdf->Ln(10);
-        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->SetFont('helvetica', 'B', 10);
         $pdf->Cell(40, 10, 'Product Name', 1);
-        $pdf->Cell(25, 10, 'Quantity', 1);
+        $pdf->Cell(15, 10, 'Qty', 1);
         $pdf->Cell(25, 10, 'Price', 1);
-        $pdf->Cell(30, 10, 'Start Date', 1);
-        $pdf->Cell(30, 10, 'End Date', 1);
-        $pdf->Cell(30, 10, 'Subtotal', 1);
+        $pdf->Cell(25, 10, 'Start Date', 1);
+        $pdf->Cell(25, 10, 'End Date', 1);
+        $pdf->Cell(20, 10, 'Duration', 1);
+        $pdf->Cell(20, 10, 'Max Days', 1);
+        $pdf->Cell(20, 10, 'Penalty', 1);
         $pdf->Ln();
         
-        $pdf->SetFont('helvetica', '', 12);
+        $total = 0;
+        $totalPenalty = 0;
+
+        $pdf->SetFont('helvetica', '', 10);
         while ($detail = $order_details_result->fetch_assoc()) {
-            $shipping_subtotal = strtolower($order['delivery_method']) == 'pickup' ? 0 : $detail['quantity'] * $detail['shippingfee'];
-            $subtotal = $detail['quantity'] * $detail['price'] + $shipping_subtotal;
+            $subtotal = $detail['quantity'] * $detail['price'];
+            $rentalDuration = calculateRentalDuration($detail['start_date'], $detail['end_date']);
+            $penalty = calculatePenalty(
+                $subtotal,
+                $rentalDuration,
+                $detail['rent_days'],
+                $detail['penalty_amount'] ?? 0.05
+            );
+            
+            $total += $subtotal;
+            $totalPenalty += $penalty;
+
+            // Format dates
+            $startDate = date('Y-m-d', strtotime($detail['start_date']));
+            $endDate = date('Y-m-d', strtotime($detail['end_date']));
             
             $pdf->Cell(40, 10, $detail['product_name'], 1);
-            $pdf->Cell(25, 10, $detail['quantity'], 1);
-            $pdf->Cell(25, 10, '₱' . number_format($detail['price'], 2), 1);
-            $pdf->Cell(30, 10, $detail['start_date'], 1); 
-            $pdf->Cell(30, 10, $detail['end_date'], 1);  
-            $pdf->Cell(30, 10, '₱' . number_format($subtotal, 2), 1);
+            $pdf->Cell(15, 10, $detail['quantity'], 1);
+            $pdf->Cell(25, 10, 'Php ' . number_format($detail['price'], 2), 1);
+            $pdf->Cell(25, 10, $startDate, 1);
+            $pdf->Cell(25, 10, $endDate, 1);
+            $pdf->Cell(20, 10, $rentalDuration . ' days', 1);
+            $pdf->Cell(20, 10, $detail['rent_days'] . ' days', 1);
+            $pdf->Cell(20, 10, 'Php ' . number_format($penalty, 2), 1);
             $pdf->Ln();
+
+            // Add penalty details if overdue
+            if ($rentalDuration > $detail['rent_days']) {
+                $pdf->SetFont('helvetica', 'I', 9);
+                $overdueDays = $rentalDuration - $detail['rent_days'];
+                $penaltyRate = ($detail['penalty_amount'] ?? 0.05) * 100;
+                $pdf->Cell(190, 8, "    Overdue by $overdueDays days - Penalty rate: $penaltyRate% per day", 'LR', 1);
+                $pdf->SetFont('helvetica', '', 10);
+            }
         }
         
+        // Summary
+        $pdf->Ln(5);
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(150, 10, 'Subtotal:', 0, 0, 'R');
+        $pdf->Cell(40, 10, 'Php ' . number_format($total, 2), 0, 1);
+        
+        if ($totalPenalty > 0) {
+            $pdf->Cell(150, 10, 'Total Penalty:', 0, 0, 'R');
+            $pdf->Cell(40, 10, 'Php ' . number_format($totalPenalty, 2), 0, 1);
+            
+            $pdf->Cell(150, 10, 'Final Total:', 0, 0, 'R');
+            $pdf->Cell(40, 10, 'Php ' . number_format($total + $totalPenalty, 2), 0, 1);
+        }
+
+        // Add footer note about penalties
+        $pdf->Ln(10);
+        $pdf->SetFont('helvetica', 'I', 10);
+        $pdf->MultiCell(0, 10, 'Note: A penalty of 5% per day is applied for rentals that exceed the maximum rent days.', 0, 'L');
+        
         // Output PDF
-        $pdf->Output('order_' . $order['reference_number'] . '.pdf', 'D');  
+        $pdf->Output('order_' . $order['reference_number'] . '.pdf', 'D');
 
     } else {
         echo "Order not found!";

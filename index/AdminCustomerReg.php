@@ -1,6 +1,93 @@
 <?php
-
 @include 'config.php';
+
+// Check database connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Process search
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search_condition = '';
+if (!empty($search)) {
+    $search_condition = " AND (firstname LIKE ? OR lastname LIKE ?)";
+    $search_param = "%$search%";
+}
+
+// Delete customer
+if (isset($_GET['delete'])) {
+    $id = intval($_GET['delete']);
+
+    // First get the image information
+    $select_image = $conn->prepare("SELECT images FROM customer WHERE customer_id = ?");
+    if (!$select_image) {
+        die('Prepare statement failed: ' . $conn->error);
+    }
+    
+    $select_image->bind_param("i", $id);
+    $select_image->execute();
+    $result = $select_image->get_result();
+    
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $image_path = $row['images']; 
+        if (file_exists($image_path)) {
+            unlink($image_path);
+        }
+    }
+
+    // Now delete the customer record
+    $delete_stmt = $conn->prepare("DELETE FROM customer WHERE customer_id = ?");
+    if (!$delete_stmt) {
+        die('Prepare statement failed: ' . $conn->error);
+    }
+
+    $delete_stmt->bind_param("i", $id);
+    
+    if ($delete_stmt->execute()) {
+        echo "<script>
+                alert('Customer deleted successfully!');
+                window.location.href = 'AdminCustomerReg.php" . 
+                (!empty($search) ? "?search=" . urlencode($search) : "") . "';
+              </script>";
+        exit();
+    } else {
+        echo "<script>
+                alert('Error deleting customer: " . $conn->error . "');
+                window.location.href = 'AdminCustomerReg.php" . 
+                (!empty($search) ? "?search=" . urlencode($search) : "") . "';
+              </script>";
+        exit();
+    }
+    
+    $delete_stmt->close();
+}
+
+// Modified queries to include search
+if (!empty($search)) {
+    // Pending customers with search
+    $pending_stmt = $conn->prepare("SELECT * FROM customer WHERE status = 'pending'" . $search_condition);
+    $pending_stmt->bind_param("ss", $search_param, $search_param);
+    $pending_stmt->execute();
+    $pending_result = $pending_stmt->get_result();
+
+    // Approved customers with search
+    $approved_stmt = $conn->prepare("SELECT * FROM customer WHERE status = 'approved'" . $search_condition);
+    $approved_stmt->bind_param("ss", $search_param, $search_param);
+    $approved_stmt->execute();
+    $approved_result = $approved_stmt->get_result();
+
+    // Declined customers with search
+    $declined_stmt = $conn->prepare("SELECT * FROM customer WHERE status = 'declined'" . $search_condition);
+    $declined_stmt->bind_param("ss", $search_param, $search_param);
+    $declined_stmt->execute();
+    $declined_result = $declined_stmt->get_result();
+} else {
+    // Original queries without search
+    $pending_result = $conn->query("SELECT * FROM customer WHERE status = 'pending'");
+    $approved_result = $conn->query("SELECT * FROM customer WHERE status = 'approved'");
+    $declined_result = $conn->query("SELECT * FROM customer WHERE status = 'declined'");
+}
 
 // Approve customer
 if (isset($_GET['approve'])) {
@@ -8,7 +95,7 @@ if (isset($_GET['approve'])) {
     $stmt = $conn->prepare("UPDATE customer SET status = 'approved' WHERE customer_id = ?");
     $stmt->bind_param("i", $id);
     if ($stmt->execute()) {
-        header('Location: AdminCustomerReg.php');
+        header('Location: AdminCustomerReg.php' . (!empty($search) ? "?search=" . urlencode($search) : ""));
         exit();
     } else {
         echo "Error updating record: " . $conn->error;
@@ -22,7 +109,7 @@ if (isset($_GET['decline'])) {
     $stmt = $conn->prepare("UPDATE customer SET status = 'declined' WHERE customer_id = ?");
     $stmt->bind_param("i", $id);
     if ($stmt->execute()) {
-        header('Location: AdminCustomerReg.php');
+        header('Location: AdminCustomerReg.php' . (!empty($search) ? "?search=" . urlencode($search) : ""));
         exit();
     } else {
         echo "Error updating record: " . $conn->error;
@@ -30,43 +117,7 @@ if (isset($_GET['decline'])) {
     $stmt->close();
 }
 
-// Delete customer
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-
-    
-    $select_image = $conn->prepare("SELECT images FROM customer WHERE customer_id = ?");
-    $select_image->bind_param("i", $id);
-    $select_image->execute();
-    $result = $select_image->get_result();
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $image_path = 'Cus_uploads/' . $row['images']; 
-        if (file_exists($image_path)) {
-            unlink($image_path); 
-        }
-    }
-
-    // Delete the record from the database
-    $delete_stmt = $conn->prepare("DELETE FROM customer WHERE customer_id = ?");
-    $delete_stmt->bind_param("i", $id);
-    if ($delete_stmt->execute()) {
-        header('Location: AdminCustomerReg.php');
-        exit();
-    } else {
-        echo "Error deleting record: " . $conn->error;
-    }
-    $delete_stmt->close();
-}
-
-// Fetch pending customer
-$pending_result = $conn->query("SELECT * FROM customer WHERE status = 'pending'");
-
-// Fetch approved customer
-$approved_result = $conn->query("SELECT * FROM customer WHERE status = 'approved'");
-
-// Fetch declined customer
-$declined_result = $conn->query("SELECT * FROM customer WHERE status = 'declined'");
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -76,128 +127,154 @@ $declined_result = $conn->query("SELECT * FROM customer WHERE status = 'declined
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Approval</title>
     <link rel="stylesheet" href="css\Adminstyles.css?v=1.0">
-</head>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f7f7f7;
-        margin: 0;
-        padding: 0;
-    }
-
-    .container {
-        width: 90%;
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        color: #333;
-    }
-
-    .back-button-container {
-        margin: 10px 0;
-    }
-
-    .back-button {
-        text-decoration: none;
-        color: #000000;
-        padding: 10px 15px;
-        border-radius: 5px;
-        font-size: 30px;
-        transition: background-color 0.3s;
-    }
-
-    .back-button i {
-        margin-right: 5px;
-    }
-
-    .back-button:hover {
-        color: #0056b3;
-    }
-
-    .table {
-        margin-bottom: 30px;
-    }
-
-    .table h2 {
-        background-color: #2F5233
-        color: #fff;
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 18px;
-    }
-
-    .table ul {
-        list-style: none;
-        padding: 0;
-    }
-
-    .table ul li {
-        background-color: #f9f9f9;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .table ul li:hover {
-        background-color: #f1f1f1;
-    }
-
-    .table ul li img {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 8px;
-        margin-right: 20px;
-    }
-
-    .table ul li .info {
-        flex: 1;
-        margin-right: 20px;
-    }
-
-    .table ul li a {
-        color: #007bff;
-        text-decoration: none;
-        font-weight: bold;
-        margin: 0 5px;
-    }
-
-    .table ul li a:hover {
-        text-decoration: underline;
-    }
-
-    /* Responsive styling */
-    @media (max-width: 768px) {
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
         .container {
-            width: 95%;
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .table ul li {
-            flex-direction: column;
-            align-items: flex-start;
+        /* Search Container */
+        .search-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .table ul li img {
-            margin-bottom: 10px;
+        .search-container form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
         }
-    }
 
-</style>
+        .search-input {
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 350px;
+            font-size: 15px;
+        }
+
+        .search-button, .clear-search {
+            padding: 12px 25px;
+            background-color: #2F5233;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .clear-search {
+            background-color: #6c757d;
+            text-decoration: none;
+        }
+
+        /* Accordion Styles */
+        .accordion-section {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .accordion-header {
+            background-color: #2F5233;
+            padding: 0px 20px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 20px;
+            background-color: white;
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        .counter-badge {
+            background-color: white;
+            color: #2F5233;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .data-table img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-buttons a {
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            font-size: 13px;
+        }
+
+        .approve { background-color: #2F5233; }
+        .decline { background-color: #dc3545; }
+        .delete { background-color: #6c757d; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { width: 95%; padding: 15px; }
+            .search-input { width: 100%; }
+            .search-container form { flex-direction: column; }
+            .data-table { display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
 <body>
-
     <div class="sidebar">
         <a href="AdminCustomerReg.php">Service Admin Approval</a>
         <a href="../Admin.php">Back to Dashboard</a>
@@ -205,88 +282,191 @@ $declined_result = $conn->query("SELECT * FROM customer WHERE status = 'declined
     
     <h2>Service Admin Approval</h2>
     <div class="container">
-
-        
-        <div class="table pending">
-            <h2>Pending Registrations</h2>
-            <?php if ($pending_result && $pending_result->num_rows > 0): ?>
-                <ul>
-                    <?php while ($row = $pending_result->fetch_assoc()): ?>
-                        <li>
-                            <div class="info">
-                                <strong><?php echo htmlspecialchars($row['name']); ?></strong><br>
-                                <span>Contact: <?php echo htmlspecialchars($row['contact_number']); ?></span><br>
-                                <span>Address: <?php echo htmlspecialchars($row['address']); ?></span><br>
-                                <span>Email: <?php echo htmlspecialchars($row['email']); ?></span>
-                            </div>
-                            <img src="<?php echo htmlspecialchars($row['images']); ?>" alt="User Image">
-                            <div class="actions">
-                                <a href="?approve=<?php echo $row['customer_id']; ?>" class="approve">Approve</a>
-                                <a href="?decline=<?php echo $row['customer_id']; ?>" class="decline">Decline</a>
-                                <a href="?delete=<?php echo $row['customer_id']; ?>" onclick="return confirm('Are you sure?');" class="delete">Delete</a>
-                            </div>
-                        </li>
-                    <?php endwhile; ?>
-                </ul>
-            <?php else: ?>
-                <p>No pending registrations.</p>
-            <?php endif; ?>
+        <!-- Search Box -->
+        <div class="search-container">
+            <form method="GET" action="">
+                <input type="text" 
+                       name="search" 
+                       class="search-input" 
+                       placeholder="Search by name..." 
+                       value="<?php echo htmlspecialchars($search); ?>">
+                <button type="submit" class="search-button">Search</button>
+                <?php if (!empty($search)): ?>
+                    <a href="AdminCustomerReg.php" class="clear-search">Clear Search</a>
+                <?php endif; ?>
+            </form>
         </div>
 
-        <!-- Approved customers -->
-        <div class="table approved">
-            <h2>Verified Registrations</h2>
-            <?php if ($approved_result && $approved_result->num_rows > 0): ?>
-                <ul>
-                    <?php while ($row = $approved_result->fetch_assoc()): ?>
-                        <li>
-                            <div class="info">
-                                <strong><?php echo htmlspecialchars($row['firstname']) . ' ' . htmlspecialchars($row['lastname']); ?></strong><br>
-                                <span>Contact: <?php echo htmlspecialchars($row['contact_number']); ?></span><br>
-                                <span>Address: <?php echo htmlspecialchars($row['address']); ?></span><br>
-                                <span>Email: <?php echo htmlspecialchars($row['email']); ?></span>
-                            </div>
-                            <img src="<?php echo htmlspecialchars($row['images']); ?>" alt="User Image">
-                            <div class="actions">
-                                <a href="?delete=<?php echo $row['customer_id']; ?>" onclick="return confirm('Are you sure?');" class="delete">Delete</a>
-                            </div>
-                        </li>
-                    <?php endwhile; ?>
-                </ul>
-            <?php else: ?>
-                <p>No approved registrations.</p>
-            <?php endif; ?>
+        <!-- Pending Registrations -->
+        <div class="accordion-section">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <h2>Pending Registrations</h2>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="counter-badge"><?php echo $pending_result->num_rows; ?></span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-content">
+                <?php if ($pending_result && $pending_result->num_rows > 0): ?>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $pending_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><img src="<?php echo htmlspecialchars($row['images']); ?>" alt="User"></td>
+                                    <td><?php echo htmlspecialchars($row['firstname'] . ' ' . $row['lastname']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['contact_number']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['address']); ?></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="?approve=<?php echo $row['customer_id']; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="approve">Approve</a>
+                                            <a href="?decline=<?php echo $row['customer_id']; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" class="decline">Decline</a>
+                                            <a href="?delete=<?php echo $row['customer_id']; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" onclick="return confirm('Are you sure?');" class="delete">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p>No pending registrations<?php echo !empty($search) ? ' matching your search' : ''; ?>.</p>
+                <?php endif; ?>
+            </div>
         </div>
 
-        <!-- Declined customers -->
-        <div class="table declined">
-            <h2>Declined Registrations</h2>
-            <?php if ($declined_result && $declined_result->num_rows > 0): ?>
-                <ul>
-                    <?php while ($row = $declined_result->fetch_assoc()): ?>
-                        <li>
-                            <div class="info">
-                                <strong><?php echo htmlspecialchars($row['name']); ?></strong><br>
-                                <span>Contact: <?php echo htmlspecialchars($row['contact_number']); ?></span><br>
-                                <span>Address: <?php echo htmlspecialchars($row['address']); ?></span><br>
-                                <span>Email: <?php echo htmlspecialchars($row['email']); ?></span>
-                            </div>
-                            <img src="<?php echo htmlspecialchars($row['images']); ?>" alt="User Image">
-                            <div class="actions">
-                                <a href="?delete=<?php echo $row['customer_id']; ?>" onclick="return confirm('Are you sure?');" class="delete">Delete</a>
-                            </div>
-                        </li>
-                    <?php endwhile; ?>
-                </ul>
-            <?php else: ?>
-                <p>No declined registrations.</p>
-            <?php endif; ?>
+        <!-- Verified Registrations -->
+        <div class="accordion-section">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <h2>Verified Registrations</h2>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="counter-badge"><?php echo $approved_result->num_rows; ?></span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-content">
+                <?php if ($approved_result && $approved_result->num_rows > 0): ?>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $approved_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><img src="<?php echo htmlspecialchars($row['images']); ?>" alt="User"></td>
+                                    <td><?php echo htmlspecialchars($row['firstname'] . ' ' . $row['lastname']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['contact_number']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['address']); ?></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="?delete=<?php echo $row['customer_id']; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" onclick="return confirm('Are you sure?');" class="delete">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p>No approved registrations<?php echo !empty($search) ? ' matching your search' : ''; ?>.</p>
+                <?php endif; ?>
+            </div>
         </div>
 
+        <!-- Declined Registrations -->
+        <div class="accordion-section">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+                <h2>Declined Registrations</h2>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="counter-badge"><?php echo $declined_result->num_rows; ?></span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-content">
+                <?php if ($declined_result && $declined_result->num_rows > 0): ?>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $declined_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><img src="<?php echo htmlspecialchars($row['images']); ?>" alt="User"></td>
+                                    <td><?php echo htmlspecialchars($row['firstname'] . ' ' . $row['lastname']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['contact_number']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['address']); ?></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="?delete=<?php echo $row['customer_id']; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" onclick="return confirm('Are you sure?');" class="delete">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p>No declined registrations<?php echo !empty($search) ? ' matching your search' : ''; ?>.</p>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
-    <?php $conn->close(); ?>
+    <script>
+    function toggleAccordion(header) {
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('.fas');
+        
+        // Close all other accordions
+        document.querySelectorAll('.accordion-content').forEach(item => {
+            if (item !== content) {
+                item.classList.remove('active');
+                item.previousElementSibling.querySelector('.fas').classList.remove('fa-chevron-up');
+                item.previousElementSibling.querySelector('.fas').classList.add('fa-chevron-down');
+            }
+        });
+        
+        // Toggle current accordion
+        content.classList.toggle('active');
+        if (content.classList.contains('active')) {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+    }
 
-    
+    // Open first accordion by default
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstAccordion = document.querySelector('.accordion-header');
+        if (firstAccordion) {
+            toggleAccordion(firstAccordion);
+        }
+    });
+    </script>
 </body>
 </html>

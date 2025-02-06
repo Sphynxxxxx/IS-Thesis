@@ -238,6 +238,7 @@ if ($profile_result && $profile_result->num_rows > 0) {
             .quantity-display {
                 font-size: 14px;
             }
+            
         }
     </style>
 </head>
@@ -284,14 +285,10 @@ if ($profile_result && $profile_result->num_rows > 0) {
                         <label for="end_date">End Date</label>
                         <input type="date" id="end_date" name="end_date" required>
                     </div>
-                </div>
-
-                <div class="delivery-method">
-                    <h3>Delivery Method</h3>
-                    <label>
-                        <input type="radio" name="delivery-method" value="pickup" checked> 
-                        Pick Up
-                    </label>
+                    <div class="rental-info">
+                        <p>Note: A 5% penalty fee will be charged per day for overdue returns.</p>
+                        <p class="rental-days">Rental Duration: <span id="rental-duration">0 days</span></p>
+                    </div>
                 </div>
 
                 <div class="summary-details">
@@ -299,9 +296,17 @@ if ($profile_result && $profile_result->num_rows > 0) {
                         <span>Subtotal</span>
                         <span id="subtotal">₱0.00</span>
                     </div>
+                    <div class="summary-item penalty-row">
+                        <span>Penalty Fees (5% per overdue day)</span>
+                        <span id="penalty-amount">₱0.00</span>
+                    </div>
                     <div class="total">
-                        <span>Total</span>
+                        <span>Total Amount</span>
                         <span id="total-amount">₱0.00</span>
+                    </div>
+
+                    <div class="penalty-info" style="margin-top: 10px; font-size: 0.9em; color: #d32f2f;">
+                        <p>Late returns will incur a 5% penalty fee per day on the total amount.</p>
                     </div>
                 </div>
 
@@ -316,38 +321,112 @@ if ($profile_result && $profile_result->num_rows > 0) {
             const subtotalElement = document.getElementById('subtotal');
             const totalAmountElement = document.getElementById('total-amount');
             const placeOrderButton = document.querySelector('.place-order');
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            const rentalDurationElement = document.getElementById('rental-duration');
+            const penaltyAmountElement = document.getElementById('penalty-amount');
 
-            // Function to check product availability from database
+            // Function to check product availability and get rent_days from database
             async function checkAvailability(productId) {
                 try {
-                    const response = await fetch(`check_availability.php?id=${productId}`);
+                    const response = await fetch(`get_product_details.php?id=${productId}`);
                     const data = await response.json();
-                    return data.quantity;
+                    return { 
+                        quantity: parseInt(data.quantity) || 0, 
+                        rent_days: parseInt(data.rent_days) || 0
+                    };
                 } catch (error) {
-                    console.error('Error checking availability:', error);
-                    return 0;
+                    console.error('Error checking product details:', error);
+                    return { 
+                        quantity: 0, 
+                        rent_days: 0 
+                    };
                 }
             }
 
+            // Calculate rental duration between two dates
+            function calculateRentalDuration(startDate, endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const diffTime = Math.abs(end - start);
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            // Calculate penalty for overdue days
+            function calculatePenalty(amount, daysOverdue) {
+                const penaltyRate = 0.05; // 5% per day
+                return amount * penaltyRate * daysOverdue;
+            }
+
+            // Calculate overdue days
+            function calculateOverdueDays(rentalDuration, maxRentDays) {
+                return Math.max(0, rentalDuration - maxRentDays);
+            }
+
+            // Update totals and penalties
+            async function updateTotalsAndPenalties() {
+                if (!startDateInput.value || !endDateInput.value) return;
+
+                const orderItems = JSON.parse(sessionStorage.getItem('orderItems') || '[]');
+                let subtotal = 0;
+                let totalPenalty = 0;
+                const rentalDuration = calculateRentalDuration(startDateInput.value, endDateInput.value);
+
+                // Calculate totals and penalties for each item
+                orderItems.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += itemTotal;
+
+                    // Only calculate penalty if rent_days is defined and rental duration exceeds it
+                    if (item.rent_days && rentalDuration > item.rent_days) {
+                        const overdueDays = rentalDuration - item.rent_days;
+                        const itemPenalty = calculatePenalty(itemTotal, overdueDays);
+                        totalPenalty += itemPenalty;
+                    }
+                });
+
+                const total = subtotal + totalPenalty;
+
+                // Update display elements
+                subtotalElement.textContent = `₱${subtotal.toFixed(2)}`;
+                if (penaltyAmountElement) {
+                    penaltyAmountElement.textContent = `₱${totalPenalty.toFixed(2)}`;
+                }
+                totalAmountElement.textContent = `₱${total.toFixed(2)}`;
+                rentalDurationElement.textContent = `${rentalDuration} days`;
+
+                // Show/hide penalty warning
+                const maxRentDays = Math.max(...orderItems.map(item => item.rent_days || 0));
+                const overdueWarning = document.getElementById('overdue-warning');
+                if (overdueWarning) {
+                    if (rentalDuration > maxRentDays) {
+                        rentalDurationElement.style.color = '#d32f2f';
+                        overdueWarning.style.display = 'block';
+                    } else {
+                        rentalDurationElement.style.color = '#2F5233';
+                        overdueWarning.style.display = 'none';
+                    }
+                }
+            }
+
+            // Load order items
             async function loadOrderItems() {
                 const orderItems = JSON.parse(sessionStorage.getItem('orderItems') || '[]');
                 let subtotal = 0;
 
                 orderList.innerHTML = '';
                 
-                // First, check availability for all items
-                const availabilityPromises = orderItems.map(async (item) => {
-                    try {
-                        const response = await fetch(`check_availability.php?id=${item.id}`);
-                        const data = await response.json();
-                        return { ...item, availableQuantity: data.quantity };
-                    } catch (error) {
-                        console.error('Error checking availability for item', item.id, error);
-                        return { ...item, availableQuantity: 0 };
-                    }
+                // Get full product details for all items
+                const updatedItemsPromises = orderItems.map(async (item) => {
+                    const productDetails = await checkAvailability(item.id);
+                    return { 
+                        ...item, 
+                        availableQuantity: productDetails.quantity,
+                        rent_days: productDetails.rent_days
+                    };
                 });
 
-                const updatedOrderItems = await Promise.all(availabilityPromises);
+                const updatedOrderItems = await Promise.all(updatedItemsPromises);
                 sessionStorage.setItem('orderItems', JSON.stringify(updatedOrderItems));
 
                 updatedOrderItems.forEach(item => {
@@ -370,6 +449,7 @@ if ($profile_result && $profile_result->num_rows > 0) {
                             </div>
                             <span class="item-total">Total: ₱${itemTotal.toFixed(2)}</span>
                             <span class="stock-info">Available Stock: ${item.availableQuantity || 0}</span>
+                            <span class="rent-days-info">Maximum Rent Days: ${item.rent_days} days</span>
                             ${item.quantity >= item.availableQuantity ? '<span class="quantity-warning">Maximum quantity reached</span>' : ''}
                         </div>
                         <div class="item-controls">
@@ -381,14 +461,14 @@ if ($profile_result && $profile_result->num_rows > 0) {
                     orderList.appendChild(orderItem);
                 });
 
-                subtotalElement.textContent = `₱${subtotal.toFixed(2)}`;
-                totalAmountElement.textContent = `₱${subtotal.toFixed(2)}`;
-
                 if (updatedOrderItems.length === 0) {
                     orderList.innerHTML = '<p style="text-align: center; padding: 20px;">Your cart is empty</p>';
                 }
+
+                await updateTotalsAndPenalties();
             }
 
+            // Event listener for quantity changes and item removal
             orderList.addEventListener('click', async (e) => {
                 const button = e.target;
                 if (button.classList.contains('quantity-btn')) {
@@ -400,13 +480,13 @@ if ($profile_result && $profile_result->num_rows > 0) {
                     
                     if (itemIndex !== -1) {
                         const item = orderItems[itemIndex];
-                        const currentStock = await checkAvailability(item.id);
+                        const productDetails = await checkAvailability(item.id);
                         
                         if (isPlus) {
-                            if (item.quantity < currentStock) {
+                            if (item.quantity < productDetails.quantity) {
                                 item.quantity++;
                             } else {
-                                alert(`Sorry, only ${currentStock} items available in stock.`);
+                                alert(`Sorry, only ${productDetails.quantity} items available in stock.`);
                                 return;
                             }
                         } else if (item.quantity > 1) {
@@ -427,10 +507,21 @@ if ($profile_result && $profile_result->num_rows > 0) {
                 }
             });
 
+            // Event listeners for date inputs
+            startDateInput.addEventListener('change', () => {
+                endDateInput.min = startDateInput.value;
+                if (endDateInput.value && new Date(endDateInput.value) < new Date(startDateInput.value)) {
+                    endDateInput.value = startDateInput.value;
+                }
+                updateTotalsAndPenalties();
+            });
+
+            endDateInput.addEventListener('change', updateTotalsAndPenalties);
+
+            // Place order event listener
             placeOrderButton.addEventListener('click', async () => {
-                const startDate = document.getElementById('start_date').value;
-                const endDate = document.getElementById('end_date').value;
-                const deliveryMethod = document.querySelector('input[name="delivery-method"]:checked').value;
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
 
                 if (!startDate || !endDate) {
                     alert('Please select start and end dates for your rental period.');
@@ -450,27 +541,35 @@ if ($profile_result && $profile_result->num_rows > 0) {
 
                 // Verify stock availability before placing order
                 for (const item of orderItems) {
-                    const currentStock = await checkAvailability(item.id);
-                    if (item.quantity > currentStock) {
-                        alert(`Sorry, "${item.name}" only has ${currentStock} items available in stock.`);
+                    const productDetails = await checkAvailability(item.id);
+                    if (item.quantity > productDetails.quantity) {
+                        alert(`Sorry, "${item.name}" only has ${productDetails.quantity} items available in stock.`);
                         return;
                     }
                 }
 
+                const rentalDuration = calculateRentalDuration(startDate, endDate);
+                const totalAmount = parseFloat(totalAmountElement.textContent.replace('₱', ''));
+                const penaltyAmount = penaltyAmountElement ? parseFloat(penaltyAmountElement.textContent.replace('₱', '')) : 0;
+
                 const orderData = {
                     orderDetails: orderItems,
-                    deliveryMethod,
                     start_date: startDate,
-                    end_date: endDate
+                    end_date: endDate,
+                    rental_duration: rentalDuration,
+                    total_amount: totalAmount,
+                    penalty_amount: penaltyAmount
                 };
 
-                fetch('saveOrder.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData),
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const response = await fetch('saveOrder.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData),
+                    });
+
+                    const data = await response.json();
+                    
                     if (data.success) {
                         sessionStorage.removeItem('orderItems');
                         alert('Your order has been placed successfully!');
@@ -478,65 +577,19 @@ if ($profile_result && $profile_result->num_rows > 0) {
                     } else {
                         alert(data.message || 'An error occurred while placing your order.');
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error:', error);
                     alert('An error occurred. Please try again.');
-                });
+                }
             });
 
             // Set minimum date for date inputs
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('start_date').min = today;
-            document.getElementById('end_date').min = today;
+            startDateInput.min = today;
+            endDateInput.min = today;
 
-            // Load items when page loads
+            // Initialize cart
             loadOrderItems();
-
-            // Sidebar toggle functionality
-            const sidebarToggle = document.querySelector('.sidebar-toggle');
-            const sidebar = document.getElementById('sidebar');
-            
-            sidebarToggle.addEventListener('click', () => {
-                sidebar.style.left = sidebar.style.left === '0px' ? '-250px' : '0px';
-            });
-
-            // Close sidebar when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                    sidebar.style.left = '-250px';
-                }
-            });
-
-            // Date validation
-            const startDateInput = document.getElementById('start_date');
-            const endDateInput = document.getElementById('end_date');
-
-            startDateInput.addEventListener('change', () => {
-                endDateInput.min = startDateInput.value;
-                if (endDateInput.value && new Date(endDateInput.value) < new Date(startDateInput.value)) {
-                    endDateInput.value = startDateInput.value;
-                }
-            });
-
-            // Update quantity limits
-            function updateQuantityButtons(item, quantityDisplay) {
-                const minusBtn = quantityDisplay.previousElementSibling;
-                const plusBtn = quantityDisplay.nextElementSibling;
-                
-                if (item.quantity <= 1) {
-                    minusBtn.disabled = true;
-                } else {
-                    minusBtn.disabled = false;
-                }
-
-                if (item.quantity >= item.availableQuantity) {
-                    plusBtn.disabled = true;
-                } else {
-                    plusBtn.disabled = false;
-                }
-            }
         });
     </script>
 </body>
-</html>
