@@ -1,6 +1,42 @@
 <?php
 @include 'config.php';
 
+// Include PHPMailer
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'vendor/autoload.php'; // Adjust the path if necessary
+
+// Function to send email
+function sendEmail($to, $subject, $body) {
+    $mail = new PHPMailer(true);
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com'; // Replace with your SMTP server
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'larrydenverbiaco@gmail.com'; // Replace with your email
+        $mail->Password   = 'brto wnuc kgvk xzva'; // Replace with your email password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        // Recipients
+        $mail->setFrom('larrydenverbiaco@gmail.com', 'Admin'); // Sender email and name
+        $mail->addAddress($to); // Recipient email
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $body;
+
+        $mail->send();
+        return true; // Email sent successfully
+    } catch (Exception $e) {
+        error_log("Email could not be sent. Error: {$mail->ErrorInfo}");
+        return false; // Email failed to send
+    }
+}
+
 // Check database connection
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
@@ -14,53 +50,46 @@ if (!empty($search)) {
     $search_param = "%$search%";
 }
 
+// Initialize result variables
+$pending_result = null;
+$approved_result = null;
+$declined_result = null;
+
 // Delete customer
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
-
-    // First get the image information
-    $select_image = $conn->prepare("SELECT images FROM customer WHERE customer_id = ?");
-    if (!$select_image) {
-        die('Prepare statement failed: ' . $conn->error);
-    }
     
-    $select_image->bind_param("i", $id);
-    $select_image->execute();
-    $result = $select_image->get_result();
+    // First, get the user's details for logging
+    $fetch_stmt = $conn->prepare("SELECT firstname, lastname, email, status FROM customer WHERE customer_id = ?");
+    $fetch_stmt->bind_param("i", $id);
+    $fetch_stmt->execute();
+    $result = $fetch_stmt->get_result();
     
     if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $image_path = $row['images']; 
-        if (file_exists($image_path)) {
-            unlink($image_path);
+        $user = $result->fetch_assoc();
+        
+        // Prepare and execute delete statement
+        $delete_stmt = $conn->prepare("DELETE FROM customer WHERE customer_id = ?");
+        $delete_stmt->bind_param("i", $id);
+        
+        if ($delete_stmt->execute()) {
+            // Log deletion
+            error_log("User deleted: {$user['firstname']} {$user['lastname']} (Email: {$user['email']}, Previous Status: {$user['status']})");
+            
+            // Redirect back to the page with optional search parameter
+            header('Location: AdminCustomerReg.php' . (!empty($search) ? "?search=" . urlencode($search) : ""));
+            exit();
+        } else {
+            // Handle delete error
+            echo "Error deleting record: " . $conn->error;
         }
-    }
-
-    // Now delete the customer record
-    $delete_stmt = $conn->prepare("DELETE FROM customer WHERE customer_id = ?");
-    if (!$delete_stmt) {
-        die('Prepare statement failed: ' . $conn->error);
-    }
-
-    $delete_stmt->bind_param("i", $id);
-    
-    if ($delete_stmt->execute()) {
-        echo "<script>
-                alert('Customer deleted successfully!');
-                window.location.href = 'AdminCustomerReg.php" . 
-                (!empty($search) ? "?search=" . urlencode($search) : "") . "';
-              </script>";
-        exit();
+        
+        $delete_stmt->close();
     } else {
-        echo "<script>
-                alert('Error deleting customer: " . $conn->error . "');
-                window.location.href = 'AdminCustomerReg.php" . 
-                (!empty($search) ? "?search=" . urlencode($search) : "") . "';
-              </script>";
-        exit();
+        echo "User not found.";
     }
     
-    $delete_stmt->close();
+    $fetch_stmt->close();
 }
 
 // Modified queries to include search
@@ -95,6 +124,25 @@ if (isset($_GET['approve'])) {
     $stmt = $conn->prepare("UPDATE customer SET status = 'approved' WHERE customer_id = ?");
     $stmt->bind_param("i", $id);
     if ($stmt->execute()) {
+        // Fetch user details to get email
+        $fetch_stmt = $conn->prepare("SELECT email, firstname FROM customer WHERE customer_id = ?");
+        $fetch_stmt->bind_param("i", $id);
+        $fetch_stmt->execute();
+        $result = $fetch_stmt->get_result();
+        if ($result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            $email = $user['email'];
+            $firstname = $user['firstname'];
+
+            // Send email notification
+            $subject = "Your Registration Has Been Approved";
+            $body = "Dear $firstname,<br><br>
+                     We are pleased to inform you that your registration has been approved.<br><br>
+                     Thank you,<br>
+                     Admin Team";
+            sendEmail($email, $subject, $body);
+        }
+
         header('Location: AdminCustomerReg.php' . (!empty($search) ? "?search=" . urlencode($search) : ""));
         exit();
     } else {
@@ -109,6 +157,25 @@ if (isset($_GET['decline'])) {
     $stmt = $conn->prepare("UPDATE customer SET status = 'declined' WHERE customer_id = ?");
     $stmt->bind_param("i", $id);
     if ($stmt->execute()) {
+        // Fetch user details to get email
+        $fetch_stmt = $conn->prepare("SELECT email, firstname FROM customer WHERE customer_id = ?");
+        $fetch_stmt->bind_param("i", $id);
+        $fetch_stmt->execute();
+        $result = $fetch_stmt->get_result();
+        if ($result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            $email = $user['email'];
+            $firstname = $user['firstname'];
+
+            // Send email notification
+            $subject = "Your Registration Has Been Declined";
+            $body = "Dear $firstname,<br><br>
+                     We regret to inform you that your registration has been declined.<br><br>
+                     Thank you,<br>
+                     Admin Team";
+            sendEmail($email, $subject, $body);
+        }
+
         header('Location: AdminCustomerReg.php' . (!empty($search) ? "?search=" . urlencode($search) : ""));
         exit();
     } else {
@@ -276,11 +343,11 @@ $conn->close();
 </head>
 <body>
     <div class="sidebar">
-        <a href="AdminCustomerReg.php">Service Admin Approval</a>
+        <!--<a href="AdminCustomerReg.php">Service Admin Approval</a>-->
         <a href="../Admin.php">Back to Dashboard</a>
     </div>
     
-    <h2>Service Admin Approval</h2>
+    <h2>Manage Users</h2>
     <div class="container">
         <!-- Search Box -->
         <div class="search-container">
