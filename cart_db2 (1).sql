@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 06, 2025 at 06:03 PM
+-- Generation Time: Mar 25, 2025 at 03:55 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,8 +48,7 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`customer_id`, `firstname`, `lastname`, `town`, `contact_number`, `address`, `email`, `password`, `images`, `status`, `profile_image`, `reset_token`, `reset_token_expiry`) VALUES
-(20, 'patrick', 'denverr', 'Zarraga', '09123456771', 'Tubigan', 'lry4750@gmail.com', '$2y$10$ql3DUEAbvyxRldpTmr3Ux.6FqMPVrp4G9bpce/pFp.EEFkX9amnMa', 'Cus_uploads/6799121ce68fc5.58074754_profileNobg.png', 'approved', '6799203e8c667_profile.png', NULL, NULL),
-(22, 'denver', 'asasas', NULL, '09123456781', 'Talauguis', 'larrydenverbiaco@gmail.com', '$2y$10$7QE.CrgAK0nODKZnhtKOgOnisOLA32y8ZJzDAa7xSQK2x8DNBY.jS', 'Cus_uploads/67a4e55180f721.61419273_Untitled-1.png', 'approved', NULL, NULL, NULL);
+(23, 'larry', 'denverr', NULL, '09123456781', 'Dapitan', 'larrydenverbiaco@gmail.com', '$2y$10$WCB4TpI7pu4AQcWCkBTv4uaCAchzvj7aLGi6.FpSLRRlg8V3DvoKW', 'Cus_uploads/67e2c29461a0e3.27846522_photo_2025-03-23_22-06-57.jpg', 'approved', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -65,38 +64,6 @@ CREATE TABLE `notifications` (
   `date_created` datetime NOT NULL,
   `order_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `notifications`
---
-
-INSERT INTO `notifications` (`id`, `customer_id`, `title`, `message`, `date_created`, `order_id`) VALUES
-(19, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 00:22:54', NULL),
-(20, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 00:53:42', NULL),
-(21, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 00:58:14', NULL),
-(22, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 01:00:48', NULL),
-(23, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 01:01:47', NULL),
-(24, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 01:06:09', NULL),
-(25, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 01:11:06', NULL),
-(26, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-01-30 01:16:08', NULL),
-(27, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-02 18:44:57', NULL),
-(28, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-02 19:16:33', NULL),
-(29, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-02 19:29:30', NULL),
-(30, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-02 19:35:55', NULL),
-(31, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-02 19:49:17', NULL),
-(32, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-02 21:10:07', NULL),
-(33, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 18:48:26', NULL),
-(34, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:00:44', NULL),
-(35, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:06:42', NULL),
-(36, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:07:19', NULL),
-(37, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:08:02', NULL),
-(38, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:13:26', NULL),
-(39, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:15:36', NULL),
-(40, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:19:33', NULL),
-(41, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:24:01', 51),
-(42, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:25:12', 52),
-(43, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:35:37', 53),
-(44, 20, 'Order Status Update', 'You have successfully placed your order.', '2025-02-06 19:36:06', 54);
 
 -- --------------------------------------------------------
 
@@ -115,16 +82,6 @@ CREATE TABLE `orders` (
   `penalty_amount` decimal(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `orders`
---
-
-INSERT INTO `orders` (`id`, `customer_id`, `order_date`, `reference_number`, `delivery_method`, `total_price`, `status`, `penalty_amount`) VALUES
-(51, 20, '2025-02-06 11:24:01', 'REF-20250206-DBF71B', 'pickup', 180.00, 'received', 0.00),
-(52, 20, '2025-02-06 11:25:12', 'REF-20250206-4C1215', 'pickup', 189.00, 'canceled', 9.00),
-(53, 20, '2025-02-06 11:35:37', 'REF-20250206-FE2C12', 'pickup', 207.00, 'received', 27.00),
-(54, 20, '2025-02-06 11:36:06', 'REF-20250206-BAA9DC', 'pickup', 52.50, 'received', 2.50);
-
 -- --------------------------------------------------------
 
 --
@@ -140,16 +97,6 @@ CREATE TABLE `order_details` (
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `order_details`
---
-
-INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `price`, `start_date`, `end_date`) VALUES
-(50, 51, 25, 1, 180.00, '2025-02-06', '2025-02-11'),
-(51, 52, 25, 1, 180.00, '2025-02-06', '2025-02-11'),
-(52, 53, 25, 1, 180.00, '2025-02-06', '2025-02-13'),
-(53, 54, 26, 1, 50.00, '2025-02-06', '2025-02-17');
 
 -- --------------------------------------------------------
 
@@ -177,7 +124,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `product_name`, `location`, `description`, `quantity`, `categories`, `price`, `image`, `status`, `rent_days`, `created_at`, `penalty_amount`) VALUES
-(23, 'sasas', 'Batuan', 'Amazing Product', 76, 'Seeding Tools', 11.00, 'garden tool2.jpg', 'approved', 11, '2024-12-11 10:31:01', 0.05),
+(23, 'sasas', 'Batuan', 'Amazing Product', 74, 'Seeding Tools', 11.00, 'garden tool2.jpg', 'approved', 11, '2024-12-11 10:31:01', 0.05),
 (24, 'sasas', 'Casalsagan', 'Original', 9, 'Seeding Tools', 100.00, 'seedingtool2.jpg', 'approved', 11, '2024-12-11 14:35:58', 0.05),
 (25, 'tool 6', 'Cahaguichican', 'Excellent', 9, 'Seeding Tools', 180.00, 'ploughs2.jpg', 'approved', 4, '2024-12-11 14:52:03', 0.05),
 (26, 'tool 10', 'Callan', 'New', 8, 'Seeding Tools', 50.00, 'garden tool2.jpg', 'approved', 10, '2024-12-11 14:54:21', 0.05),
@@ -209,7 +156,8 @@ ALTER TABLE `notifications`
 -- Indexes for table `orders`
 --
 ALTER TABLE `orders`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_customer` (`customer_id`);
 
 --
 -- Indexes for table `order_details`
@@ -233,25 +181,25 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -269,6 +217,12 @@ ALTER TABLE `products`
 ALTER TABLE `notifications`
   ADD CONSTRAINT `fk_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`);
+
+--
+-- Constraints for table `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `fk_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `order_details`
