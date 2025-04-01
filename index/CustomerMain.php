@@ -74,14 +74,11 @@
                 'Sinuagan', 'Tuburan', 'Tumcon Ilaud', 'Tumcon Ilaya', 'Ubang', 'Zarrague'
             ],
             'Zarraga': [
-                'Poblacion Norte',
-                'Poblacion Sur',
-                'Talauguis',
-                'Tubigan',
-                'Inagawan',
-                'Antipolo',
-                'Jalaud',
-                'Yambu'
+            'Balud Lilo-an', 'Balud I', 'Balud II', 'Dawis Centro', 'Dawis Norte', 'Dawis Sur',
+            'Gines', 'Inagdangan Centro', 'Inagdangan Norte', 'Inagdangan Sur', 'Jalaud Norte', 'Jalaud Sur',
+            'Libongcogon', 'Malunang', 'Pajo', 'Ilawod Poblacion' , 'Ilaya Poblacion' , 'Sambag', 'Sigangao',
+            'Talauguis', 'Talibong', 'Tubigan', 'Tuburan'
+
             ]
         };
 

@@ -5,6 +5,7 @@ session_start();
 // Add a product
 if (isset($_POST['add_product'])) {
     $product_name = mysqli_real_escape_string($conn, $_POST['product_name']);
+    $town = mysqli_real_escape_string($conn, $_POST['town']); 
     $location = mysqli_real_escape_string($conn, $_POST['location']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
     $quantity = intval($_POST['quantity']);
@@ -17,7 +18,7 @@ if (isset($_POST['add_product'])) {
     $status = 'approved';
 
     // Check if all fields are filled
-    if (empty($product_name) || empty($location) || empty($description) || empty($quantity) || empty($product_price) || empty($categories) || empty($product_image)) {
+    if (empty($product_name) || empty($town) || empty($location) || empty($description) || empty($quantity) || empty($product_price) || empty($categories) || empty($product_image)) {
         $message[] = 'Please fill out all fields.';
     } elseif ($quantity <= 0 || $rent_days <= 0 || $product_price <= 0) {
         $message[] = 'Invalid input for numerical fields. Please enter valid values.';
@@ -31,8 +32,8 @@ if (isset($_POST['add_product'])) {
             $message[] = 'File upload failed. Please try again.';
         } else {
             // Prepare SQL query
-            $insert = $conn->prepare("INSERT INTO products (product_name, location, description, quantity, rent_days, price, categories, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $insert->bind_param("sssiddsss", $product_name, $location, $description, $quantity, $rent_days, $product_price, $categories, $product_image, $status);
+            $insert = $conn->prepare("INSERT INTO products (product_name, town, location, description, quantity, rent_days, price, categories, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $insert->bind_param("ssssiddsss", $product_name, $town, $location, $description, $quantity, $rent_days, $product_price, $categories, $product_image, $status);
             
             if ($insert->execute()) {
                 // Move the uploaded file to the folder
@@ -120,63 +121,22 @@ if (isset($message)) {
 <div class="container">
         <form action="AddProduct.php" method="post" enctype="multipart/form-data">
             <h3>Add a New Product</h3>
-            <input type="text" placeholder="Enter Product Name" name="product_name" class="box" required>            
-            <select id="register-address" name="location" required>
-                <option value="" disabled selected>Select Barangay</option>
-                <option value="Abangay">Abangay</option>
-                <option value="Amamaros">Amamaros</option>
-                    <option value="Bagacay">Bagacay</option>
-                    <option value="Barasan">Barasan</option>
-                    <option value="Batuan">Batuan</option>
-                    <option value="Bongco">Bongco</option>
-                    <option value="Cahaguichican">Cahaguichican</option>
-                    <option value="Callan">Callan</option>
-                    <option value="Cansilayan">Cansilayan</option>
-                    <option value="Casalsagan">Casalsagan</option>
-                    <option value="Cato-ogan">Cato-ogan</option>
-                    <option value="Cau-ayan">Cau-ayan</option>
-                    <option value="Culob">Culob</option>
-                    <option value="Danao">Danao</option>
-                    <option value="Dapitan">Dapitan</option>
-                    <option value="Dawis">Dawis</option>
-                    <option value="Dongsol">Dongsol</option>
-                    <option value="Fernando Parcon Ward">Fernando Parcon Ward</option>
-                    <option value="Guibuangan">Guibuangan</option>
-                    <option value="Guinacas">Guinacas</option>
-                    <option value="Igang">Igang</option>
-                    <option value="Intaluan">Intaluan</option>
-                    <option value="Iwa Ilaud">Iwa Ilaud</option>
-                    <option value="Iwa Ilaya">Iwa Ilaya</option>
-                    <option value="Jamabalud">Jamabalud</option>
-                    <option value="Jebioc">Jebioc</option>
-                    <option value="Lay-ahan">Lay-ahan</option>
-                    <option value="Lopez Jaena Ward">Lopez Jaena Ward</option>
-                    <option value="Lumbo">Lumbo</option>
-                    <option value="Macatol">Macatol</option>
-                    <option value="Malusgod">Malusgod</option>
-                    <option value="Nabitasan">Nabitasan</option>
-                    <option value="Naga">Naga</option>
-                    <option value="Nanga">Nanga</option>
-                    <option value="Naslo">Naslo</option>
-                    <option value="Pajo">Pajo</option>
-                    <option value="Palanguia">Palanguia</option>
-                    <option value="Pitogo">Pitogo</option>
-                    <option value="Primitivo Ledesma Ward">Primitivo Ledesma Ward</option>
-                    <option value="Purog">Purog</option>
-                    <option value="Rumbang">Rumbang</option>
-                    <option value="San Jose Ward">San Jose Ward</option>
-                    <option value="Sinuagan">Sinuagan</option>
-                    <option value="Tuburan">Tuburan</option>
-                    <option value="Tumcon Ilaud">Tumcon Ilaud</option>
-                    <option value="Tumcon Ilaya">Tumcon Ilaya</option>
-                    <option value="Ubang">Ubang</option>
-                    <option value="Zarrague">Zarrague</option>
-                
+            <input type="text" placeholder="Enter Product Name" name="product_name" class="box" required>
+            
+            <select id="town-select" name="town" class="box" required>
+                <option value="" disabled selected>Select Town</option>
+                <option value="Pototan">Pototan</option>
+                <option value="Zarraga">Zarraga</option>
             </select>
+            
+            <select id="barangay-select" name="location" class="box" required disabled>
+                <option value="" disabled selected>Select Barangay</option>
+            </select>
+            
             <input type="text" placeholder="Description" name="description" class="box" required>
             <input type="number" placeholder="Rent Days" name="rent_days" class="box" required>
             <input type="number" placeholder="Quantity" name="quantity" class="box" required>
-            <select id="categories" name="categories" required>
+            <select id="categories" name="categories" class="box" required>
                 <option value="" disabled selected>Categories</option>
                 <option value="Hand Tools">Hand Tools</option>
                 <option value="Ploughs">Ploughs</option>
@@ -194,18 +154,64 @@ if (isset($message)) {
 </div>
 
 <script>
+    const townSelect = document.getElementById('town-select');
+    const barangaySelect = document.getElementById('barangay-select');
+
+    const barangays = {
+        'Pototan': [
+            'Abangay', 'Amamaros', 'Bagacay', 'Barasan', 'Batuan', 'Bongco', 
+            'Cahaguichican', 'Callan', 'Cansilayan', 'Casalsagan', 'Cato-ogan', 
+            'Cau-ayan', 'Culob', 'Danao', 'Dapitan', 'Dawis', 'Dongsol', 
+            'Fernando Parcon Ward', 'Guibuangan', 'Guinacas', 'Igang', 'Intaluan', 
+            'Iwa Ilaud', 'Iwa Ilaya', 'Jamabalud', 'Jebioc', 'Lay-ahan', 
+            'Lopez Jaena Ward', 'Lumbo', 'Macatol', 'Malusgod', 'Nabitasan', 
+            'Naga', 'Nanga', 'Naslo', 'Pajo', 'Palanguia', 'Pitogo', 
+            'Primitivo Ledesma Ward', 'Purog', 'Rumbang', 'San Jose Ward', 
+            'Sinuagan', 'Tuburan', 'Tumcon Ilaud', 'Tumcon Ilaya', 'Ubang', 
+            'Zarrague'
+        ],
+        'Zarraga': [
+            'Balud Lilo-an', 'Balud I', 'Balud II', 'Dawis Centro', 'Dawis Norte', 'Dawis Sur',
+            'Gines', 'Inagdangan Centro', 'Inagdangan Norte', 'Inagdangan Sur', 'Jalaud Norte', 'Jalaud Sur',
+            'Libongcogon', 'Malunang', 'Pajo', 'Ilawod Poblacion' , 'Ilaya Poblacion' , 'Sambag', 'Sigangao',
+            'Talauguis', 'Talibong', 'Tubigan', 'Tuburan'
+
+        ]
+    };
+
+    townSelect.addEventListener('change', function() {
+        barangaySelect.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+        
+        const selectedTown = this.value;
+        
+        if (selectedTown) {
+            barangaySelect.disabled = false;
+            
+            barangays[selectedTown].forEach(barangay => {
+                const option = document.createElement('option');
+                option.value = barangay;
+                option.textContent = barangay;
+                barangaySelect.appendChild(option);
+            });
+        } else {
+            barangaySelect.disabled = true;
+        }
+    });
+
     // Get the sidebar and the toggle button
     const sidebar = document.querySelector('.sidebar');
     const sidebarToggle = document.querySelector('.sidebar-toggle');
 
     // Add event listener to toggle sidebar visibility
-    sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-    });
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+    }
 
     // Close sidebar if clicked outside of it
     document.addEventListener('click', (event) => {
-        if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+        if (sidebar && sidebarToggle && !sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
             sidebar.classList.remove('active');
         }
     });
