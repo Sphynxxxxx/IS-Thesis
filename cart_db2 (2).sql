@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 25, 2025 at 03:55 PM
+-- Generation Time: Apr 01, 2025 at 02:09 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,7 +48,7 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`customer_id`, `firstname`, `lastname`, `town`, `contact_number`, `address`, `email`, `password`, `images`, `status`, `profile_image`, `reset_token`, `reset_token_expiry`) VALUES
-(23, 'larry', 'denverr', NULL, '09123456781', 'Dapitan', 'larrydenverbiaco@gmail.com', '$2y$10$WCB4TpI7pu4AQcWCkBTv4uaCAchzvj7aLGi6.FpSLRRlg8V3DvoKW', 'Cus_uploads/67e2c29461a0e3.27846522_photo_2025-03-23_22-06-57.jpg', 'approved', NULL, NULL, NULL);
+(31, 'patrick', 'Catalan', 'Pototan', '09123456781', 'Dapitan', 'larrydenverbiaco@gmail.com', '$2y$10$h4yM8w9HJbdvw96JdWEt2OL3f1Lm.3mVQgtsFB.17nFrclUQxnsPi', 'Cus_uploads/67e2ca57366746.14116490_photo_2025-03-23_22-06-41.jpg', 'approved', '67ebcd4ce2a3d_58794964-32a2-4e4b-8b66-7a97e29e4c36.jpg', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -64,6 +64,14 @@ CREATE TABLE `notifications` (
   `date_created` datetime NOT NULL,
   `order_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `customer_id`, `title`, `message`, `date_created`, `order_id`) VALUES
+(53, 31, 'Order Status Update', 'You have successfully placed your order.', '2025-04-01 19:43:05', 63),
+(54, 31, 'Order Status Update', 'You have successfully placed your order.', '2025-04-01 19:46:00', 64);
 
 -- --------------------------------------------------------
 
@@ -82,6 +90,14 @@ CREATE TABLE `orders` (
   `penalty_amount` decimal(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`id`, `customer_id`, `order_date`, `reference_number`, `delivery_method`, `total_price`, `status`, `penalty_amount`) VALUES
+(63, 31, '2025-04-01 11:43:05', 'REF-20250401-F77B97', 'pickup', 320.00, 'pending', 20.00),
+(64, 31, '2025-04-01 11:46:00', 'REF-20250401-7E2930', 'pickup', 370.00, 'received', 70.00);
+
 -- --------------------------------------------------------
 
 --
@@ -98,6 +114,16 @@ CREATE TABLE `order_details` (
   `end_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `order_details`
+--
+
+INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `price`, `start_date`, `end_date`) VALUES
+(63, 63, 34, 2, 50.00, '2025-04-01', '2025-04-05'),
+(64, 63, 35, 2, 100.00, '2025-04-01', '2025-04-05'),
+(65, 64, 34, 2, 50.00, '2025-04-01', '2025-04-10'),
+(66, 64, 35, 2, 100.00, '2025-04-01', '2025-04-10');
+
 -- --------------------------------------------------------
 
 --
@@ -107,6 +133,7 @@ CREATE TABLE `order_details` (
 CREATE TABLE `products` (
   `id` int(11) NOT NULL,
   `product_name` varchar(255) NOT NULL,
+  `town` varchar(255) DEFAULT NULL,
   `location` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `quantity` int(11) NOT NULL,
@@ -123,14 +150,12 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `product_name`, `location`, `description`, `quantity`, `categories`, `price`, `image`, `status`, `rent_days`, `created_at`, `penalty_amount`) VALUES
-(23, 'sasas', 'Batuan', 'Amazing Product', 74, 'Seeding Tools', 11.00, 'garden tool2.jpg', 'approved', 11, '2024-12-11 10:31:01', 0.05),
-(24, 'sasas', 'Casalsagan', 'Original', 9, 'Seeding Tools', 100.00, 'seedingtool2.jpg', 'approved', 11, '2024-12-11 14:35:58', 0.05),
-(25, 'tool 6', 'Cahaguichican', 'Excellent', 9, 'Seeding Tools', 180.00, 'ploughs2.jpg', 'approved', 4, '2024-12-11 14:52:03', 0.05),
-(26, 'tool 10', 'Callan', 'New', 8, 'Seeding Tools', 50.00, 'garden tool2.jpg', 'approved', 10, '2024-12-11 14:54:21', 0.05),
-(27, 'tool 55', 'Bongco', 'Brand New', 0, 'Tilling Tools', 90.00, 'tilling2.jpg', 'approved', 60, '2024-12-11 14:55:30', 0.05),
-(28, 'tool 100', 'Barasan', 'wowow', 0, 'Harvesting Tools', 100.00, 'seedingtool2.jpg', 'approved', 5, '2024-12-11 16:17:05', 0.05),
-(29, 'tool 31', 'Cahaguichican', 'qwregfgdfgdf', 10, 'Harvesting Tools', 90.00, 'harvesting tool1.jpg', 'approved', 99, '2024-12-11 16:20:25', 0.05);
+INSERT INTO `products` (`id`, `product_name`, `town`, `location`, `description`, `quantity`, `categories`, `price`, `image`, `status`, `rent_days`, `created_at`, `penalty_amount`) VALUES
+(34, 'garab', 'Zarraga', 'Barangay I (Poblacion)', 'solid', 17, 'Tilling Tools', 50.00, 'images.jpg', 'approved', 10, '2025-04-01 11:36:15', 0.05),
+(35, 'mini rake', 'Zarraga', 'Cansilayan', 'New', 1, 'Harvesting Tools', 100.00, '81KFG3Nf1EL._AC_SL1500_.jpg', 'approved', 2, '2025-04-01 11:37:16', 0.05),
+(36, 'pliers', 'Pototan', 'Bongco', 'used once', 5, 'Hand Tools', 43.00, 'download (1).jpg', 'approved', 3, '2025-04-01 11:38:03', 0.05),
+(37, 'Set seeding tools', 'Zarraga', 'Barangay III (Poblacion)', 'brand new', 3, 'Seeding Tools', 150.00, '51PLVmpcJUL.jpg', 'approved', 5, '2025-04-01 11:38:43', 0.05),
+(38, 'scissors', 'Pototan', 'Fernando Parcon Ward', 'Used but not abuses', 7, 'Cutting Tools', 34.00, 'dressmaking-shears-cutting-tool-sewing.jpg', 'approved', 5, '2025-04-01 11:39:32', 0.05);
 
 --
 -- Indexes for dumped tables
@@ -181,31 +206,31 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- Constraints for dumped tables
