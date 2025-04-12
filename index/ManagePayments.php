@@ -446,18 +446,25 @@ $result->data_seek(0);
                         }
                     },
                     legend: {
+                        display: true,
                         position: 'bottom'
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(47, 82, 51, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
                         callbacks: {
                             label: function(context) {
-                                return '₱' + context.parsed.y.toFixed(2);
+                                return 'Sales: ₱' + context.parsed.y.toFixed(2);
+                            },
+                            title: function(context) {
+                                return 'Date: ' + dates[context[0].dataIndex];
                             }
                         }
                     }
                 },
                 scales: {
-                        y: {
+                    y: {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
@@ -475,25 +482,6 @@ $result->data_seek(0);
                 interaction: {
                     intersect: false,
                     mode: 'index'
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(47, 82, 51, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        callbacks: {
-                            label: function(context) {
-                                return 'Sales: ₱' + context.parsed.y.toFixed(2);
-                            },
-                            title: function(context) {
-                                return 'Date: ' + dates[context[0].dataIndex];
-                            }
-                        }
-                    }
                 }
             }
         });

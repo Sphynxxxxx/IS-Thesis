@@ -149,22 +149,7 @@ if (!$result) {
             border-radius: 4px;
             display: inline-block;
         }
-        .status-pending {
-            color: #ffc107;
-            background-color: rgba(255, 193, 7, 0.1);
-        }
-        .status-ready {
-            color: #28a745;
-            background-color: rgba(40, 167, 69, 0.1);
-        }
-        .status-canceled {
-            color: #dc3545;
-            background-color: rgba(220, 53, 69, 0.1);
-        }
-        .status-received {
-            color: #17a2b8;
-            background-color: rgba(23, 162, 184, 0.1);
-        }
+        
         .rental-period {
             display: flex;
             flex-direction: column;
@@ -256,7 +241,7 @@ if (!$result) {
                             <td>
                                 <div class='action-buttons'>
                                     <button class='ready-btn' data-order-id='<?php echo $row['order_id']; ?>'>
-                                        Ready to pickup
+                                        Claimable
                                     </button>
                                     <button class='cancel-btn' data-order-id='<?php echo $row['order_id']; ?>'>
                                         Cancel
@@ -292,7 +277,7 @@ if (!$result) {
                                 statusClass = 'status-pending';
                                 break;
                             case 'ready_to_pick_up':
-                                statusText = 'Ready for Pickup';
+                                statusText = 'Claimable';
                                 statusClass = 'status-ready';
                                 break;
                             case 'canceled':

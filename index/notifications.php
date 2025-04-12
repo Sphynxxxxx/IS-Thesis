@@ -164,7 +164,7 @@ $result = $stmt->get_result();
                 $order_id = htmlspecialchars($row['order_id']);
 
                 if ($order_status === 'ready_to_pick_up') {
-                    $order_status = 'Ready to Pickup';
+                    $order_status = 'Claimable';
                 }
 
                 if ($order_status === 'canceled') {
@@ -178,7 +178,7 @@ $result = $stmt->get_result();
                     <p><strong>Order ID:</strong> <?php echo $order_id; ?></p>
                     <p><strong>Reference Number:</strong> <?php echo $reference_number; ?></p>
                     <small>Received on: <?php echo $date_created; ?></small>
-                    <?php if ($order_status === 'Ready to Pickup') { ?>
+                    <?php if ($order_status === 'Claimable') { ?>
                         <button class="received-button" data-order-id="<?php echo $order_id; ?>">Receive</button>
                     <?php } ?>
                 </div>

@@ -40,7 +40,7 @@ $result = $conn->query($sql);
                 <nav>
                     <ul>
                         <li><a href="CusProfile.php">Profile</a></li>
-                        <li><a href="History.php">History</a></li>
+                        <li><a href="History.php">Transaction</a></li>
                         <li><a href="CusLogout.php">Logout</a></li>
                     </ul>
                 </nav>

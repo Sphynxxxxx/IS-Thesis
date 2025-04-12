@@ -56,40 +56,68 @@ $approved_result = null;
 $declined_result = null;
 
 // Delete customer
+
+// Delete customer
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+    // Start a transaction
+    $conn->begin_transaction();
     
-    // First, get the user's details for logging
-    $fetch_stmt = $conn->prepare("SELECT firstname, lastname, email, status FROM customer WHERE customer_id = ?");
-    $fetch_stmt->bind_param("i", $id);
-    $fetch_stmt->execute();
-    $result = $fetch_stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $user = $result->fetch_assoc();
-        
-        // Prepare and execute delete statement
-        $delete_stmt = $conn->prepare("DELETE FROM customer WHERE customer_id = ?");
-        $delete_stmt->bind_param("i", $id);
-        
-        if ($delete_stmt->execute()) {
-            // Log deletion
+    try {
+        // Fetch the user's details first
+        $fetch_stmt = $conn->prepare("SELECT firstname, lastname, email, status FROM customer WHERE customer_id = ?");
+        $fetch_stmt->bind_param("i", $id);
+        $fetch_stmt->execute();
+        $result = $fetch_stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            
+            // First delete related notifications
+            $delete_notifications = $conn->prepare("DELETE FROM notifications WHERE customer_id = ?");
+            $delete_notifications->bind_param("i", $id);
+            $delete_notifications->execute();
+            $delete_notifications->close();
+            
+            // Delete related orders (order_details will be deleted by cascade)
+            $delete_orders = $conn->prepare("DELETE FROM orders WHERE customer_id = ?");
+            $delete_orders->bind_param("i", $id);
+            $delete_orders->execute();
+            $delete_orders->close();
+            
+            // Now delete the customer
+            $delete_stmt = $conn->prepare("DELETE FROM customer WHERE customer_id = ?");
+            $delete_stmt->bind_param("i", $id);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+
+            // Log the deletion
             error_log("User deleted: {$user['firstname']} {$user['lastname']} (Email: {$user['email']}, Previous Status: {$user['status']})");
             
-            // Redirect back to the page with optional search parameter
-            header('Location: AdminCustomerReg.php' . (!empty($search) ? "?search=" . urlencode($search) : ""));
+            // Commit transaction
+            $conn->commit();
+
+            // Redirect back with optional search and success message
+            $query = [];
+            if (!empty($search)) {
+                $query['search'] = $search;
+            }
+            $query['message'] = 'deleted';
+            $redirect_url = 'AdminCustomerReg.php' . (!empty($query) ? '?' . http_build_query($query) : '');
+            header("Location: $redirect_url");
             exit();
         } else {
-            // Handle delete error
-            echo "Error deleting record: " . $conn->error;
+            echo "⚠️ User not found.";
         }
-        
-        $delete_stmt->close();
-    } else {
-        echo "User not found.";
+
+        $fetch_stmt->close();
+    } catch (Exception $e) {
+        // Roll back transaction on error
+        $conn->rollback();
+        echo "❌ Error deleting record: " . $e->getMessage();
     }
-    
-    $fetch_stmt->close();
 }
 
 // Modified queries to include search
